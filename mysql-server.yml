@@ -1,0 +1,33 @@
+---
+- hosts: webservers
+  tasks:
+    - name: kataloog allalaadimiseks
+      file:
+        path=/root/allalaadimised
+        owner=root
+        group=root
+        mode=0755
+        state=directory
+
+    - name: MySQL APT pakett install
+      shell: |
+        wget -O /root/allalaadimised/mysql-apt-config_0.8.36-1_all.deb https://dev.mysql.com/get/mysql-apt-config_0.8.36-1_all.deb
+
+    - name: gnupg install
+      apt:
+        name: gnupg
+        state: present
+        update_cache: yes
+
+    - name: mysql repositoorium
+      apt:
+        deb: /root/allalaadimised/mysql-apt-config_0.8.36-1_all.deb
+
+    - name: apt update
+      apt:
+        update_cache: yes
+
+    - name: mysql server install
+      apt:
+        name: mysql-server
+        state: present

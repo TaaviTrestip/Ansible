@@ -1,0 +1,37 @@
+---
+- hosts: webservers
+  tasks:
+    - name: install apache2
+      apt: name=apache2 update_cache=yes state=latest
+
+    - name: public_html kataloog user_ile
+      file:
+        path=/home/user/public_html
+        owner=user
+        group=user
+        mode=0755
+        state=directory
+
+    - name: userdir mod
+      apache2_module: name=userdir state=present
+
+    - name: restart apache2
+      service:
+        name: apache2
+        state: restarted
+
+    - name: index.html user_ile kodukataloogis public_html kataloogi
+      copy:
+        src: /var/www/html/index.html
+        dest: /home/user/public_html/
+        remote_src: yes
+        owner: user
+        group: user
+
+    - name: user index.html muutmine
+      lineinfile: dest=/home/user/public_html/index.html regexp="Apache2 Debian Default Page" line="USER's default page" state=present
+
+    - name: restart apache2 again
+      service:
+        name: apache2
+        state: restarted

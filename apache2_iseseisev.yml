@@ -1,0 +1,48 @@
+---
+- hosts: webservers
+  tasks:
+    - name: system info
+      ansible.builtin.setup:
+
+    - name: install apache2
+      apt: name=apache2 update_cache=yes state=latest
+
+    - name: public_html kataloog user_ile
+      file:
+        path=/home/user/public_html
+        owner=user
+        group=user
+        mode=0755
+        state=directory
+
+    - name: restart apache2
+      service:
+        name: apache2
+        state: restarted
+
+    - name: index.html user_ile kodukataloogis public_html kataloogi
+      copy:
+        src: /var/www/html/index.html
+        dest: /home/user/public_html/
+        remote_src: yes
+        owner: user
+        group: user
+
+    - name: header dynamic resize
+      lineinfile:
+        dest: /home/user/public_html/index.html
+        regexp: 'height: 99px;'
+        line: '    min-height: 99px; height: auto; overflow: auto;'
+        state: present
+
+    - name: user index.html welcome, hostname and ip
+      lineinfile:
+        dest: /home/user/public_html/index.html
+        regexp: 'Apache2 Debian Default Page'
+        line: 'Welcome to your default page USER <p><b>Hostname:</b> {{ ansible_hostname }}<br><b>IP:</b> {{ ansible_default_ipv4.address }}</p>'
+        state: present
+
+    - name: restart apache2 again
+      service:
+        name: apache2
+        state: restarted

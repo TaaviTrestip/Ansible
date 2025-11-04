@@ -1,0 +1,17 @@
+---
+# Commands to remove problematic version of php
+# apt-get purge php7.*
+# apt-get purge php7.X-common
+# apt remove php7.X*
+- hosts: webservers
+  become: yes
+  tasks:
+    - name: remove PHP and related packages
+      apt:
+        name:
+          - php
+          - libapache2-mod-php
+          - php-mysql
+        state: absent
+        purge: yes
+        autoremove: yes
