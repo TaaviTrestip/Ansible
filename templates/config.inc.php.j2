@@ -1,0 +1,17 @@
+<?php
+$cfg['blowfish_secret'] = '{{ blowfish_secret }}';
+
+$i = 0;
+$i++;
+$cfg['Servers'][$i]['host'] = '{{ mysql_host }}';
+$cfg['Servers'][$i]['port'] = '{{ mysql_port }}';
+$cfg['Servers'][$i]['auth_type'] = 'cookie';
+$cfg['Servers'][$i]['user'] = '{{ mysql_root_user }}';
+$cfg['Servers'][$i]['password'] = '{{ mysql_root_password }}';
+$cfg['Servers'][$i]['AllowNoPassword'] = false;
+
+$cfg['DefaultLang'] = 'en';
+$cfg['UploadDir'] = '';
+$cfg['SaveDir'] = '';
+$cfg['PmaAbsoluteUri'] = 'http://{{ (ansible_host | default(inventory_hostname)) }}/phpmyadmin';
+?>
