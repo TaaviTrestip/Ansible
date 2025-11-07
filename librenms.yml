@@ -1,12 +1,11 @@
 ---
-#- import_playbook: /root/playbooks/apache2.yml
-#- import_playbook: /root/playbooks/apache2_iseseisev.yml
-#- import_playbook: /root/playbooks/php.yml
-#- import_playbook: /root/playbooks/mysql-server.yml
-#- import_playbook: /root/playbooks/mysql-user.yml
-#- import_playbook: /root/playbooks/wordpress.yml
-#- import_playbook: /root/playbooks/phpmyadmin.yml
-
+- import_playbook: /root/playbooks/apache2.yml
+- import_playbook: /root/playbooks/apache2_iseseisev.yml
+- import_playbook: /root/playbooks/php.yml
+- import_playbook: /root/playbooks/mysql-server.yml
+- import_playbook: /root/playbooks/mysql-user.yml
+- import_playbook: /root/playbooks/wordpress.yml
+- import_playbook: /root/playbooks/phpmyadmin.yml
 
 - name: LibreNMS paigaldus ja seadistus playbook
   hosts: webservers
@@ -59,8 +58,22 @@
           - nmap
           - python3-mysqldb
           - curl
-          - pip3
         state: present
+
+    - name: Install pip3 and build tools for Python packages
+      ansible.builtin.apt:
+        name:
+          - python3-pip
+          - python3-venv
+          - python3-setuptools
+          - python3-wheel
+          - build-essential
+          - libffi-dev
+          - libssl-dev
+          - libjpeg-dev
+          - zlib1g-dev
+        state: present
+        update_cache: yes
 
     - name: Enable Apache rewrite module
       command: a2enmod rewrite
@@ -198,10 +211,35 @@
         chdir: "{{ librenms_dir }}"
       become_user: "{{ librenms_user }}"
 
-    - name: Install Python requirements for LibreNMS
-      ansible.builtin.pip:
+# Install venv tooling (once)
+    - name: Install pip3 and venv tooling
+      apt:
+        name:
+          - python3-venv
+          - python3-pip
+          - python3-setuptools
+          - python3-wheel
+        state: present
+        update_cache: yes
+
+# Create a dedicated venv for LibreNMS
+    - name: Create venv for LibreNMS
+      command: "python3 -m venv {{ librenms_dir }}/.venv"
+      args:
+        creates: "{{ librenms_dir }}/.venv/bin/activate"
+      become_user: "{{ librenms_user }}"
+
+# Upgrade pip in the venv
+    - name: Upgrade pip in venv
+      command: "{{ librenms_dir }}/.venv/bin/pip install --upgrade pip setuptools wheel"
+      become_user: "{{ librenms_user }}"
+
+# Install the Python requirements into the venv
+    - name: Install Python requirements for LibreNMS (venv)
+      pip:
         requirements: "{{ librenms_dir }}/requirements.txt"
-        executable: pip3
+        virtualenv: "{{ librenms_dir }}/.venv"
+        virtualenv_command: "python3 -m venv"
 
     - name: Ensure ownership of LibreNMS tree
       file:
