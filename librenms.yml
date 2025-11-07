@@ -118,6 +118,19 @@
         create_home: yes
         system: yes
 
+    - name: Remove LibreNMS directory completely
+      ansible.builtin.file:
+        path: "{{ librenms_dir }}"
+        state: absent
+
+    - name: Create LibreNMS directory
+      file:
+        path: "{{ librenms_dir }}"
+        state: directory
+        owner: "{{ librenms_user }}"
+        group: "{{ librenms_user }}"
+        mode: "0755"
+
     - name: Ensure /opt/librenms is writable by librenms
       file:
         path: "{{ librenms_dir }}"
@@ -133,6 +146,13 @@
       file:
         path: "{{ librenms_dir }}/vendor"
         state: absent
+
+    - name: Clone LibreNMS from GitHub
+      git:
+        repo: "https://github.com/librenms/librenms.git"
+        dest: "{{ librenms_dir }}"
+        version: master
+        update: yes
 
     - name: Composer install as librenms (non-interactive)
       become_user: "{{ librenms_user }}"
@@ -167,7 +187,7 @@
 
     - name: Template config.php
       template:
-        src: root/templates/config.php.j2
+        src: templates/config.php.j2
         dest: "{{ librenms_dir }}/config.php"
         owner: "{{ librenms_user }}"
         group: "{{ librenms_group }}"
@@ -175,9 +195,9 @@
 
     - name: Deploy Apache vhost for LibreNMS
       template:
-        src: root/templates/librenms-apache.conf.j2
+        src: templates/librenms-apache.conf.j2
         dest: /etc/apache2/sites-available/librenms.conf
-      notify: Restart Apache
+      notify: restart apache
 
     - name: Enable LibreNMS site and disable default
       shell: |
@@ -185,30 +205,11 @@
         a2ensite librenms.conf
       args:
         warn: false
-      notify: Restart Apache
+      notify: restart apache
 
     - name: Allow non-root fping (required by poller)
       command: setcap cap_net_raw+ep /usr/bin/fping
       changed_when: false
-
-    # --- Composer, APP key, migrations ---
-    - name: Composer install (no-dev, optimized) – ensures vendor/autoload.php exists
-      command: "php scripts/composer_wrapper.php install --no-dev -o"
-      args:
-        chdir: "{{ librenms_dir }}"
-      become_user: "{{ librenms_user }}"
-
-    - name: Generate Laravel APP key (idempotent)
-      command: "php artisan key:generate --force"
-      args:
-        chdir: "{{ librenms_dir }}"
-      become_user: "{{ librenms_user }}"
-
-    - name: Run DB migrations
-      command: "php artisan migrate --force"
-      args:
-        chdir: "{{ librenms_dir }}"
-      become_user: "{{ librenms_user }}"
 
     - name: Ensure snmpd is running
       service:
