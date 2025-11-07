@@ -1,11 +1,11 @@
 ---
-- import_playbook: /root/playbooks/apache2.yml
-- import_playbook: /root/playbooks/apache2_iseseisev.yml
-- import_playbook: /root/playbooks/php.yml
-- import_playbook: /root/playbooks/mysql-server.yml
-- import_playbook: /root/playbooks/mysql-user.yml
-- import_playbook: /root/playbooks/wordpress.yml
-- import_playbook: /root/playbooks/phpmyadmin.yml
+#- import_playbook: /root/playbooks/apache2.yml
+#- import_playbook: /root/playbooks/apache2_iseseisev.yml
+#- import_playbook: /root/playbooks/php.yml
+#- import_playbook: /root/playbooks/mysql-server.yml
+#- import_playbook: /root/playbooks/mysql-user.yml
+#- import_playbook: /root/playbooks/wordpress.yml
+#- import_playbook: /root/playbooks/phpmyadmin.yml
 
 
 - name: LibreNMS paigaldus ja seadistus playbook
@@ -199,12 +199,17 @@
         dest: /etc/apache2/sites-available/librenms.conf
       notify: restart apache
 
-    - name: Enable LibreNMS site and disable default
-      shell: |
-        a2dissite 000-default.conf || true
-        a2ensite librenms.conf
-      args:
-        warn: false
+    - name: Enable LibreNMS site
+      file:
+        src: /etc/apache2/sites-available/librenms.conf
+        path: /etc/apache2/sites-enabled/librenms.conf
+        state: link
+      notify: restart apache
+
+    - name: Disable default Apache site
+      file:
+        path: /etc/apache2/sites-enabled/000-default.conf
+        state: absent
       notify: restart apache
 
     - name: Allow non-root fping (required by poller)
