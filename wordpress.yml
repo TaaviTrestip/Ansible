@@ -131,3 +131,14 @@
       args:
         chdir: /var/www/html/wordpress
       when: wp_is_installed.rc == 1
+
+    - name: Uuenda WordPressi siteurl ja home uue IP põhjal
+      ansible.builtin.command: >
+        wp option update {{ item.name }} {{ site_url }} --allow-root
+      args:
+        chdir: /var/www/html/wordpress
+      loop:
+        - { name: "siteurl" }
+        - { name: "home" }
+      when: wp_is_installed.rc == 0
+
