@@ -1,0 +1,8 @@
+---
+- import_playbook: /root/playbooks/apache2.yml
+- import_playbook: /root/playbooks/apache2_iseseisev.yml
+- import_playbook: /root/playbooks/php.yml
+- import_playbook: /root/playbooks/mysql-server.yml
+- import_playbook: /root/playbooks/mysql-user.yml
+- import_playbook: /root/playbooks/wordpress.yml
+- import_playbook: /root/playbooks/phpmyadmin.yml
